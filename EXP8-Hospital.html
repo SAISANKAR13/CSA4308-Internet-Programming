@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedCare Hospital - Appointment System</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f0f4f8; color: #333; }
+  header { background: #0056b3; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
+  nav button { background: white; color: #0056b3; border: none; padding: 8px 14px; margin-left: 8px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+  .hero { position: relative; height: 210px; overflow: hidden; border-radius: 8px; margin-bottom: 20px; }
+  .hero img { width: 100%; height: 100%; object-fit: cover; filter: brightness(65%); }
+  .hero-text { position: absolute; bottom: 20px; left: 25px; color: white; }
+  .container { max-width: 1050px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+  .hidden { display: none; }
+  input, select, textarea { width: 100%; padding: 9px; margin: 6px 0 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+  button.btn { background: #0056b3; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+  button.btn-danger { background: #dc3545; }
+  .card { border: 1px solid #e1e8ed; padding: 14px; margin-bottom: 12px; border-radius: 8px; background: #fafcff; display: flex; gap: 15px; align-items: center; }
+  .doc-img { width: 75px; height: 75px; border-radius: 50%; object-fit: cover; border: 2px solid #0056b3; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h2>🏥 MedCare Hospital Portal</h2>
+  <nav>
+    <button onclick="showSection('authSec')">Login / Register</button>
+    <button onclick="showSection('patientSec')">Patient Dashboard</button>
+    <button onclick="showSection('hospitalSec')">Hospital Portal</button>
+    <button onclick="showSection('adminSec')">Admin Panel</button>
+  </nav>
+</header>
+
+<div class="container">
+  <!-- HERO BANNER IMAGE -->
+  <div class="hero">
+    <img src="https://unsplash.com"
+         onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://w3.org width=%221200%22 height=%22250%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%230056b3%22/><text x=%2250%25%22 y=%2250%25%22 fill=%22white%22 font-size=%2232%22 font-family=%22Arial%22 text-anchor=%22middle%22>MedCare Multi-Specialty Hospital</text></svg>'"
+         alt="MedCare Hospital">
+    <div class="hero-text">
+      <h2 style="margin:0;">Seamless Online Doctor Appointments</h2>
+      <p style="margin:5px 0 0;">Search specialists by location, submit check-in forms, and manage your medical visits.</p>
+    </div>
+  </div>
+
+  <!-- AUTH SECTION -->
+  <div id="authSec">
+    <h3>Patient & User Authentication</h3>
+    <div class="grid">
+      <div>
+        <h4>New User Registration</h4>
+        <input id="regName" placeholder="Full Name">
+        <input id="regEmail" placeholder="Email Address">
+        <input id="regPass" type="password" placeholder="Password">
+        <button class="btn" onclick="registerUser()">Register</button>
+      </div>
+      <div>
+        <h4>Existing User Login</h4>
+        <input id="logEmail" placeholder="Email Address">
+        <input id="logPass" type="password" placeholder="Password">
+        <button class="btn" onclick="loginUser()">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATIENT / USER SECTION -->
+  <div id="patientSec" class="hidden">
+    <h3>Patient Dashboard <span id="activeUserLabel" style="font-size:14px;color:#0056b3;"></span></h3>
+    <div class="grid">
+      <div>
+        <h4>Search Doctors (Specialty & Location)</h4>
+        <input id="searchSpec" placeholder="Filter by Specialty (e.g., Cardiology, Dermatology)" onkeyup="renderDoctors()">
+        <input id="searchLoc" placeholder="Filter by Location (e.g., Chennai, Coimbatore)" onkeyup="renderDoctors()">
+        <div id="doctorList"></div>
+      </div>
+      <div>
+        <h4>Book Appointment & Check-in Form</h4>
+        <select id="bookDocSelect"></select>
+        <input id="bookDate" type="date">
+        <input id="bookTime" type="time">
+        <textarea id="checkinNotes" rows="3" placeholder="Check-in Form: Enter symptoms, allergies, or medical history"></textarea>
+        <button class="btn" onclick="bookAppointment()">Book Appointment</button>
+      </div>
+    </div>
+    <hr>
+    <h4>My Appointments & Past Check-in History</h4>
+    <div id="patientApptList"></div>
+  </div>
+
+  <!-- HOSPITAL SECTION -->
+  <div id="hospitalSec" class="hidden">
+    <h3>Hospital Registration & Directory</h3>
+    <div class="grid">
+      <div>
+        <h4>Create / Update Hospital Details</h4>
+        <input id="hospName" placeholder="Hospital Name">
+        <input id="hospLoc" placeholder="City / Location">
+        <input id="hospMap" placeholder="Google Maps URL (https://google.com...)">
+        <button class="btn" onclick="addHospital()">Save Hospital</button>
+      </div>
+      <div>
+        <h4>Registered Hospitals & Maps</h4>
+        <div id="hospitalList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN SECTION -->
+  <div id="adminSec" class="hidden">
+    <h3>Admin Panel (Statistics, Doctors & Ratings)</h3>
+    <div id="adminStats" class="card" style="font-weight:bold;"></div>
+    <div class="grid">
+      <div>
+        <h4>Add New Doctor</h4>
+        <input id="docName" placeholder="Doctor Name">
+        <input id="docSpec" placeholder="Specialty">
+        <input id="docLoc" placeholder="Location">
+        <input id="docHosp" placeholder="Hospital Name">
+        <button class="btn" onclick="addDoctor()">Add Doctor</button>
+      </div>
+      <div>
+        <h4>All Appointments & Patient Feedback</h4>
+        <div id="adminApptList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const docFallback = "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='80' height='80'><rect width='80' height='80' fill='%230056b3'/><text x='40' y='46' fill='white' font-size='22' font-family='Arial' text-anchor='middle'>DR</text></svg>";
+
+let doctors = JSON.parse(localStorage.getItem('mc_docs')) || [
+  { id: 1, name: "Dr. Arun Kumar", spec: "Cardiology", loc: "Chennai", hosp: "MedCare Main", rating: "4.9/5", img: "https://unsplash.com" },
+  { id: 2, name: "Dr. Priya Nair", spec: "Dermatology", loc: "Coimbatore", hosp: "MedCare City", rating: "4.7/5", img: "https://unsplash.com" }
+];
+let hospitals = JSON.parse(localStorage.getItem('mc_hosps')) || [
+  { name: "MedCare Main Hospital", loc: "Chennai", map: "https://google.com?q=Chennai" }
+];
+let appointments = JSON.parse(localStorage.getItem('mc_appts')) || [];
+let currentUser = localStorage.getItem('mc_user') || "Guest Patient";
+
+function save() {
+  localStorage.setItem('mc_docs', JSON.stringify(doctors));
+  localStorage.setItem('mc_hosps', JSON.stringify(hospitals));
+  localStorage.setItem('mc_appts', JSON.stringify(appointments));
+}
+
+function showSection(id) {
+  ['authSec', 'patientSec', 'hospitalSec', 'adminSec'].forEach(s => document.getElementById(s).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  renderAll();
+}
+
+function registerUser() {
+  const name = document.getElementById('regName').value;
+  if (!name) return alert("Enter full name");
+  currentUser = name;
+  localStorage.setItem('mc_user', name);
+  alert("Registered and logged in as " + name);
+  showSection('patientSec');
+}
+
+function loginUser() {
+  const email = document.getElementById('logEmail').value;
+  if (!email) return alert("Enter email");
+  currentUser = email.split('@');
+  localStorage.setItem('mc_user', currentUser);
+  showSection('patientSec');
+}
+
+function renderDoctors() {
+  const spec = document.getElementById('searchSpec').value.toLowerCase();
+  const loc = document.getElementById('searchLoc').value.toLowerCase();
+  const filtered = doctors.filter(d => d.spec.toLowerCase().includes(spec) && d.loc.toLowerCase().includes(loc));
+  document.getElementById('doctorList').innerHTML = filtered.map(d => `
+    <div class="card">
+      <img class="doc-img" src="${d.img}" onerror="this.src='${docFallback}'" alt="${d.name}">
+      <div>
+        <b>${d.name}</b> • <span style="color:#0056b3;">${d.spec}</span><br>
+        <small>${d.hosp}, ${d.loc} | Rating: ⭐ ${d.rating}</small>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('bookDocSelect').innerHTML = doctors.map(d => `<option value="${d.name}">${d.name} (${d.spec})</option>`).join('');
+}
+
+function bookAppointment() {
+  const doc = document.getElementById('bookDocSelect').value;
+  const date = document.getElementById('bookDate').value;
+  const time = document.getElementById('bookTime').value;
+  const notes = document.getElementById('checkinNotes').value;
+  if (!date || !time) return alert("Please select appointment date and time.");
+  appointments.push({ id: Date.now(), patient: currentUser, doc, date, time, notes, status: "Confirmed", review: "" });
+  save();
+  alert("Appointment Confirmed! Email/SMS reminder scheduled.");
+  renderAll();
+}
+
+function cancelAppt(id) {
+  appointments = appointments.filter(a => a.id !== id);
+  save();
+  renderAll();
+}
+
+function addReview(id) {
+  const rev = prompt("Enter your doctor review and rating:");
+  if (rev) {
+    const appt = appointments.find(a => a.id === id);
+    if (appt) appt.review = rev;
+    save();
+    renderAll();
+  }
+}
+
+function addHospital() {
+  const name = document.getElementById('hospName').value;
+  const loc = document.getElementById('hospLoc').value;
