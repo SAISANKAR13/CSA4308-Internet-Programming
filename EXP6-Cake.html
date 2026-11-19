@@ -1,0 +1,152 @@
+%%html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SweetCrumbs - Online Cake Ordering</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#fff7f4;color:#382b2b}
+header{background:#7b2942;color:white;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+header h1{margin:0}nav{display:flex;gap:6px;flex-wrap:wrap}
+button{border:0;border-radius:6px;background:#a83e5d;color:white;padding:10px 14px;cursor:pointer;font-weight:bold;margin:2px}
+button:hover{opacity:.86}nav button{background:#913650}
+.container{max-width:1150px;margin:24px auto;padding:0 15px}.card{background:white;padding:22px;border-radius:12px;margin-bottom:20px;box-shadow:0 3px 14px #54233312}
+h2{color:#7b2942;margin-top:0}input,select,textarea{width:100%;padding:11px;margin:6px 0 14px;border:1px solid #e2cbd1;border-radius:6px;font:inherit}
+label{font-size:14px;font-weight:bold}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.hidden{display:none!important}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.product{border:1px solid #f0dce2;border-radius:10px;overflow:hidden;background:#fff}
+.product img{width:100%;height:165px;object-fit:cover;background:#f8e8ec}.product-info{padding:14px}.product h3{margin:4px 0;color:#7b2942}
+.price{font-weight:bold;color:#a12f53;font-size:18px}.small{font-size:13px;color:#806d72}.tag{background:#fbe6ed;color:#8a2947;border-radius:5px;padding:4px 7px;font-size:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;padding:10px;border-bottom:1px solid #f0dce2;font-size:14px}th{background:#fff0f4}
+.notice{padding:12px;background:#fff0f4;border-radius:7px;margin:10px 0}.good{color:#16803d;font-weight:bold}.bad{color:#c62828}
+footer{text-align:center;padding:20px;color:#806d72}
+@media(max-width:650px){header{padding:15px}.grid{grid-template-columns:1fr}.card{padding:15px}nav button{font-size:12px;padding:8px}}
+</style>
+</head>
+<body>
+<header>
+<h1>🎂 SweetCrumbs</h1>
+<nav>
+<button onclick="page('home')">Cakes</button><button onclick="page('cart')">My Cart</button>
+<button onclick="page('orders')">My Orders</button><button onclick="page('account')">Account</button>
+<button onclick="page('login')">Login</button><button onclick="page('admin')">Admin</button>
+</nav>
+</header>
+<div class="container">
+<section id="home" class="section">
+<div class="card"><h2>Find Your Perfect Cake</h2>
+<div class="grid">
+<div><label>Search Cake</label><input id="search" placeholder="Search by cake name or flavor" oninput="renderProducts()"></div>
+<div><label>Category</label><select id="category" onchange="renderProducts()"><option value="">All Categories</option><option>Birthday</option><option>Wedding</option><option>Anniversary</option><option>Festival</option><option>Custom</option></select></div>
+<div><label>Sub Category / Flavor</label><select id="flavor" onchange="renderProducts()"><option value="">All Flavors</option><option>Chocolate</option><option>Vanilla</option><option>Strawberry</option><option>Black Forest</option><option>Butterscotch</option><option>Red Velvet</option></select></div>
+<div><label>Maximum Price (₹)</label><input id="maxPrice" type="number" min="0" placeholder="Any price" oninput="renderProducts()"></div>
+</div></div>
+<div id="productList" class="products"></div>
+</section>
+
+<section id="register" class="section hidden"><div class="card"><h2>Customer Registration</h2>
+<form onsubmit="register(event)"><label>Full Name</label><input id="regName" required>
+<label>Email</label><input id="regEmail" type="email" required><label>Mobile Number</label><input id="regMobile" required>
+<label>Password</label><input id="regPass" type="password" minlength="4" required><button>Register</button></form>
+<button onclick="page('login')">Already registered? Login</button></div></section>
+
+<section id="login" class="section hidden"><div class="card"><h2>Customer Login</h2>
+<form onsubmit="login(event)"><label>Email</label><input id="loginEmail" type="email" required>
+<label>Password</label><input id="loginPass" type="password" required><button>Login</button></form>
+<button onclick="page('register')">Create Account</button></div></section>
+
+<section id="cake" class="section hidden"><div class="card"><div id="cakeDetails"></div>
+<h3>Customize Your Cake</h3><div class="grid"><div><label>Size</label><select id="cakeSize" onchange="updateCakePrice()"><option value="0.5">0.5 kg</option><option value="1" selected>1 kg</option><option value="2">2 kg</option><option value="3">3 kg</option></select></div>
+<div><label>Message on Cake</label><input id="cakeMessage" maxlength="60" placeholder="Happy Birthday!"></div></div>
+<label>Quantity</label><input id="cakeQty" type="number" min="1" max="10" value="1" onchange="updateCakePrice()">
+<p id="cakePrice" class="price"></p><button onclick="addToCart()">Add to Cart</button><button onclick="page('home')">Continue Shopping</button></div></section>
+
+<section id="cart" class="section hidden"><div class="card"><h2>Shopping Cart</h2><div id="cartList"></div></div></section>
+
+<section id="checkout" class="section hidden"><div class="card"><h2>Delivery Details & Payment</h2><div id="checkoutSummary"></div>
+<form onsubmit="placeOrder(event)"><label>Recipient Name</label><input id="shipName" required>
+<label>Mobile Number</label><input id="shipMobile" required><label>Delivery Address</label><textarea id="shipAddress" rows="3" required></textarea>
+<div class="grid"><div><label>City</label><input id="shipCity" required></div><div><label>PIN Code</label><input id="shipPin" required></div></div>
+<label>Delivery Date</label><input id="deliveryDate" type="date" required>
+<label>Payment Method</label><select id="paymentMethod"><option>UPI (Demo)</option><option>Debit/Credit Card (Demo)</option><option>Cash on Delivery</option></select>
+<p class="small">Demo checkout only. No real payment is processed and no email is sent.</p><button>Confirm Order</button></form></div></section>
+
+<section id="orders" class="section hidden"><div class="card"><h2>My Orders & Delivery Status</h2><div id="ordersList"></div></div></section>
+<section id="account" class="section hidden"><div class="card"><h2>My Account</h2><div id="accountDetails"></div></div></section>
+
+<section id="admin" class="section hidden">
+<div class="card" id="adminLoginBox"><h2>Administrator Login</h2><p class="small">Demo: admin@cake.com / admin123</p>
+<form onsubmit="adminLogin(event)"><label>Email</label><input id="adminEmail" type="email" required><label>Password</label><input id="adminPass" type="password" required><button>Login as Admin</button></form></div>
+<div id="adminPanel" class="hidden">
+<div class="card"><h2>Admin Dashboard</h2><div id="stats"></div><button onclick="adminLogout()">Logout</button></div>
+<div class="card"><h2>Add / Edit Cake</h2><form onsubmit="saveCake(event)"><input id="editId" type="hidden">
+<label>Cake Name</label><input id="pName" required><div class="grid"><div><label>Category</label><select id="pCategory"><option>Birthday</option><option>Wedding</option><option>Anniversary</option><option>Festival</option><option>Custom</option></select></div>
+<div><label>Flavor</label><select id="pFlavor"><option>Chocolate</option><option>Vanilla</option><option>Strawberry</option><option>Black Forest</option><option>Butterscotch</option><option>Red Velvet</option></select></div></div>
+<label>Description</label><textarea id="pDescription" required></textarea><div class="grid"><div><label>Price per kg (₹)</label><input id="pPrice" type="number" min="1" required></div><div><label>Available Stock</label><input id="pStock" type="number" min="0" required></div></div>
+<label>Image URL</label><input id="pImage" placeholder="https://example.com/cake.jpg"><button>Save Cake</button><button type="button" onclick="resetCakeForm()">Clear</button></form></div>
+<div class="card"><h2>Manage Cake Inventory</h2><div id="adminProducts" class="tablewrap"></div></div>
+<div class="card"><h2>Manage Orders</h2><div id="adminOrders" class="tablewrap"></div></div>
+<div class="card"><h2>Registered Customers</h2><div id="adminUsers" class="tablewrap"></div></div>
+</div></section>
+</div>
+<footer>SweetCrumbs · Online Cake Ordering System · Internet Programming Lab</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+function load(k,f){try{let v=JSON.parse(localStorage.getItem(k));return v===null?f:v}catch{return f}}
+function save(){localStorage.setItem("cake_users",JSON.stringify(users));localStorage.setItem("cake_products",JSON.stringify(products));localStorage.setItem("cake_orders",JSON.stringify(orders));localStorage.setItem("cake_cart",JSON.stringify(cart));localStorage.setItem("cake_current",JSON.stringify(current))}
+let users=load("cake_users",[]),products=load("cake_products",null),orders=load("cake_orders",[]),cart=load("cake_cart",[]),current=load("cake_current",null);
+let admin=false,selected=null;
+const sample=[
+{id:1,name:"Chocolate Truffle",category:"Birthday",flavor:"Chocolate",description:"Rich chocolate sponge layered with smooth chocolate ganache.",price:650,stock:20,image:"https://images.unsplash.com/photo-1578985545062-69928b1da1a9?w=700"},
+{id:2,name:"Classic Vanilla",category:"Wedding",flavor:"Vanilla",description:"Soft vanilla cake with creamy frosting, suitable for every celebration.",price:500,stock:15,image:"https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=700"},
+{id:3,name:"Strawberry Delight",category:"Anniversary",flavor:"Strawberry",description:"Fresh strawberry flavour with light whipped cream.",price:600,stock:12,image:"https://images.unsplash.com/photo-1488477181946-6428a0291777?w=700"},
+{id:4,name:"Black Forest",category:"Birthday",flavor:"Black Forest",description:"Chocolate layers, cherries and whipped cream.",price:700,stock:10,image:"https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?w=700"},
+{id:5,name:"Red Velvet",category:"Custom",flavor:"Red Velvet",description:"A soft red velvet cake with cream cheese frosting.",price:800,stock:8,image:"https://images.unsplash.com/photo-1586788680434-30d324b2d46f?w=700"}
+];
+if(!products){products=sample;save()}
+function show(id){document.querySelectorAll(".section").forEach(x=>x.classList.add("hidden"));$(id).classList.remove("hidden")}
+function page(id){
+ if(["cart","checkout","orders","account"].includes(id)&&!current){alert("Please login first.");show("login");return}
+ if(id==="home")renderProducts();if(id==="cart")renderCart();if(id==="orders")renderOrders();if(id==="account")renderAccount();
+ if(id==="admin"){$("adminLoginBox").classList.toggle("hidden",admin);$("adminPanel").classList.toggle("hidden",!admin);if(admin)renderAdmin()}
+ show(id)
+}
+function register(e){e.preventDefault();let email=$("regEmail").value.trim().toLowerCase();if(users.some(u=>u.email===email)){alert("Email already registered.");return}
+ users.push({name:$("regName").value.trim(),email,mobile:$("regMobile").value.trim(),password:$("regPass").value});current=email;save();alert("Registration successful.");page("home")}
+function login(e){e.preventDefault();let email=$("loginEmail").value.trim().toLowerCase();if(!users.some(u=>u.email===email&&u.password===$("loginPass").value)){alert("Invalid email or password.");return}current=email;save();alert("Login successful.");page("home")}
+function renderProducts(){let q=$("search").value.toLowerCase(),cat=$("category").value,fl=$("flavor").value,max=Number($("maxPrice").value)||Infinity;
+ let list=products.filter(p=>(p.name+" "+p.flavor).toLowerCase().includes(q)&&(!cat||p.category===cat)&&(!fl||p.flavor===fl)&&p.price<=max);
+ $("productList").innerHTML=list.length?list.map(p=>`<div class="product"><img src="${safe(p.image)}" alt="${safe(p.name)}" onerror="this.src='https://placehold.co/600x400?text=Cake'"><div class="product-info"><span class="tag">${safe(p.category)}</span><h3>${safe(p.name)}</h3><p>${safe(p.description)}</p><p class="price">₹${p.price} / kg</p><p class="small">Stock: ${p.stock}</p><button onclick="viewCake(${p.id})">View Details</button></div></div>`).join("") : "<div class='card'>No cakes found. Try another filter.</div>"}
+function safe(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+function viewCake(id){selected=products.find(p=>p.id===id);$("cakeDetails").innerHTML=`<h2>${safe(selected.name)}</h2><img src="${safe(selected.image)}" style="width:100%;max-width:420px;height:230px;object-fit:cover;border-radius:9px"><p>${safe(selected.description)}</p><p>Category: ${safe(selected.category)} | Flavor: ${safe(selected.flavor)}</p><p class="small">Price: ₹${selected.price} per kg | Available: ${selected.stock}</p>`;$("cakeQty").value=1;$("cakeSize").value="1";$("cakeMessage").value="";updateCakePrice();show("cake")}
+function updateCakePrice(){if(!selected)return;let total=selected.price*Number($("cakeSize").value)*Number($("cakeQty").value||1);$("cakePrice").textContent="Total: ₹"+total}
+function addToCart(){if(!current){alert("Please login before adding items to cart.");show("login");return}let qty=Number($("cakeQty").value),size=Number($("cakeSize").value);if(qty<1||qty>10||qty>selected.stock){alert("Please select a valid quantity within available stock.");return}
+ cart.push({id:selected.id,name:selected.name,size,qty,message:$("cakeMessage").value.trim(),unitPrice:selected.price,total:selected.price*size*qty});save();alert("Cake added to cart.");page("cart")}
+function renderCart(){let total=cart.reduce((n,x)=>n+x.total,0);$("cartList").innerHTML=cart.length?cart.map((x,i)=>`<div class="notice"><b>${safe(x.name)}</b> — ${x.size} kg × ${x.qty}<br>Message: ${safe(x.message||"None")}<br>₹${x.total}<button onclick="removeCart(${i})">Remove</button></div>`).join("")+`<h3>Grand Total: ₹${total}</h3><button onclick="checkout()">Proceed to Checkout</button>` : "<p>Your cart is empty.</p>"}
+function removeCart(i){cart.splice(i,1);save();renderCart()}
+function checkout(){if(!cart.length)return;let u=users.find(x=>x.email===current);$("shipName").value=u.name;$("shipMobile").value=u.mobile;$("checkoutSummary").innerHTML="<p>Items: "+cart.length+" | Total: <b>₹"+cart.reduce((n,x)=>n+x.total,0)+"</b></p>";$("deliveryDate").min=new Date().toISOString().slice(0,10);show("checkout")}
+function placeOrder(e){e.preventDefault();if(!cart.length)return;let order={id:"CK"+Date.now().toString().slice(-8),user:current,items:cart.map(x=>({...x})),total:cart.reduce((n,x)=>n+x.total,0),name:$("shipName").value.trim(),mobile:$("shipMobile").value.trim(),address:$("shipAddress").value.trim(),city:$("shipCity").value.trim(),pin:$("shipPin").value.trim(),deliveryDate:$("deliveryDate").value,payment:$("paymentMethod").value,status:"Order Confirmed",date:new Date().toLocaleString()};
+ for(let item of cart){let p=products.find(x=>x.id===item.id);if(!p||p.stock<item.qty){alert("Stock changed for "+item.name+". Please update your cart.");return}}
+ cart.forEach(item=>products.find(p=>p.id===item.id).stock-=item.qty);orders.push(order);cart=[];save();alert("Order placed successfully. Order ID: "+order.id);page("orders")}
+function renderOrders(){let list=orders.filter(o=>o.user===current).slice().reverse();$("ordersList").innerHTML=list.length?list.map(o=>`<div class="notice"><h3>Order ${safe(o.id)}</h3><p>${o.items.map(x=>safe(x.name)+" ("+x.size+" kg × "+x.qty+")").join(", ")}</p><p>Total: ₹${o.total} | Date: ${safe(o.date)}</p><p>Delivery: ${safe(o.deliveryDate)} — ${safe(o.city)}</p><p class="good">Status: ${safe(o.status)}</p></div>`).join("") : "<p>No orders found.</p>"}
+function renderAccount(){let u=users.find(x=>x.email===current);if(!u){current=null;save();show("login");return}$("accountDetails").innerHTML=`<form onsubmit="updateAccount(event)"><label>Name</label><input id="accName" value="${safe(u.name)}" required><label>Email</label><input value="${safe(u.email)}" disabled><label>Mobile</label><input id="accMobile" value="${safe(u.mobile)}" required><button>Update Profile</button></form><button onclick="logout()">Logout</button>`}
+function updateAccount(e){e.preventDefault();let u=users.find(x=>x.email===current);u.name=$("accName").value.trim();u.mobile=$("accMobile").value.trim();save();alert("Profile updated.");renderAccount()}
+function logout(){current=null;save();alert("Logged out.");page("home")}
+function adminLogin(e){e.preventDefault();if($("adminEmail").value==="admin@cake.com"&&$("adminPass").value==="admin123"){admin=true;page("admin")}else alert("Invalid admin credentials.")}
+function adminLogout(){admin=false;page("home")}
+function resetCakeForm(){["editId","pName","pDescription","pPrice","pStock","pImage"].forEach(id=>$(id).value="")}
+function saveCake(e){e.preventDefault();let id=$("editId").value,p={id:id?Number(id):Date.now(),name:$("pName").value.trim(),category:$("pCategory").value,flavor:$("pFlavor").value,description:$("pDescription").value.trim(),price:Number($("pPrice").value),stock:Number($("pStock").value),image:$("pImage").value.trim()||"https://placehold.co/600x400?text=Cake"};
+ if(id)products=products.map(x=>x.id===Number(id)?p:x);else products.push(p);save();resetCakeForm();renderAdmin();alert("Cake details saved.")}
+function editCake(id){let p=products.find(x=>x.id===id);$("editId").value=p.id;$("pName").value=p.name;$("pCategory").value=p.category;$("pFlavor").value=p.flavor;$("pDescription").value=p.description;$("pPrice").value=p.price;$("pStock").value=p.stock;$("pImage").value=p.image;window.scrollTo({top:0,behavior:"smooth"})}
+function deleteCake(id){if(confirm("Delete this cake?")){products=products.filter(x=>x.id!==id);save();renderAdmin()}}
+function changeStatus(id){let o=orders.find(x=>x.id===id),s=prompt("Enter new status: Order Confirmed, Preparing, Out for Delivery, Delivered, Cancelled",o.status);if(s&&s.trim()){o.status=s.trim();save();renderAdmin()}}
+function renderAdmin(){if(!admin)return;$("stats").innerHTML=`<p>Cakes: ${products.length} | Customers: ${users.length} | Orders: ${orders.length} | Sales: ₹${orders.filter(o=>o.status!=="Cancelled").reduce((n,o)=>n+o.total,0)}</p>`;
+ $("adminProducts").innerHTML=`<table><tr><th>Cake</th><th>Category / Flavor</th><th>Price</th><th>Stock</th><th>Actions</th></tr>`+products.map(p=>`<tr><td>${safe(p.name)}</td><td>${safe(p.category)} / ${safe(p.flavor)}</td><td>₹${p.price}</td><td>${p.stock}</td><td><button onclick="editCake(${p.id})">Edit</button><button onclick="deleteCake(${p.id})">Delete</button></td></tr>`).join("")+"</table>";
+ $("adminOrders").innerHTML=orders.length?`<table><tr><th>Order ID</th><th>Customer</th><th>Delivery Address</th><th>Total</th><th>Status</th><th>Action</th></tr>`+orders.map(o=>`<tr><td>${safe(o.id)}</td><td>${safe(o.user)}</td><td>${safe(o.address)}, ${safe(o.city)} - ${safe(o.pin)}</td><td>₹${o.total}</td><td>${safe(o.status)}</td><td><button onclick="changeStatus('${o.id}')">Update Status</button></td></tr>`).join("")+"</table>" : "<p>No orders yet.</p>";
+ $("adminUsers").innerHTML=users.length?`<table><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Orders</th></tr>`+users.map(u=>`<tr><td>${safe(u.name)}</td><td>${safe(u.email)}</td><td>${safe(u.mobile)}</td><td>${orders.filter(o=>o.user===u.email).length}</td></tr>`).join("")+"</table>" : "<p>No customers registered.</p>"}
+renderProducts();
+</script>
+</body>
+</html>
